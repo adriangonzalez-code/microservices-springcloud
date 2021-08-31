@@ -1,28 +1,14 @@
-package com.smoothiemx.servicioproducto.app.models;
+package com.smoothiemx.servicioitem.app.models;
 
-import javax.persistence.*;
-import java.io.Serializable;
 import java.util.Date;
 
-@Entity
-@Table(name = "productos")
-public class Producto implements Serializable {
+public class Producto {
 
-    private static final long serialVersionUID = 733211145957564164L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String nombre;
     private Double precio;
-
-    @Transient
-    private Integer port;
-
-    @Column(name = "create_at")
-    @Temporal(TemporalType.DATE)
     private Date createAt;
+    private Integer port;
 
     public Long getId() {
         return id;
