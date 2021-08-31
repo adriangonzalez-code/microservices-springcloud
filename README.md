@@ -77,3 +77,143 @@ spring.application.name=my-service-name
 ~~~
 
 Esto para registrar el servicio en **Eureka** y podamos acceder a través de él directamente por su nombre, no desde su *IP* y *puerto*.
+
+### REST TEMPLATE
+
+**RestTemplate** nos permite comunicarnos y consumir otra API de tipo REST en otro servidor. Es un cliente Http para comunicarnos mediante Http a recursos que están en otros microservicios.
+
+#### CONFIGURAR REST TEMPLATE
+
+Debemos crear un `@Bean` en una clase anotada con `@Configuration`
+
+~~~
+@Bean("clienteRest")
+public RestTemplate registrarRestTemplate() {
+    return new RestTemplate();
+}
+~~~
+
+### FEIGN
+
+**Feign** es otra forma de implementar un cliente Http como **RestTemplate**, es otra alternativa con el mismo objetivo: comunicarnos mediante Http a otro microservicio.
+
+#### CONFIGURAR FEGIN
+
+Primero debemos agregar la dependencia en el **pom.xml**
+
+~~~
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+~~~
+
+Debemos anotar con
+
+`@EnableFeignClients`
+
+En la clase anotada con **@SpringBootApplication** que es la clase principal de arranque de *SpringBoot*.
+
+**Feign** trabaja con interfaces, por lo que debemos crear una interfaz que anotaremos con `@FeignClient(name = "<my-service-name>", url = "<http://url>")`, en `<my-service-name>` definimos el nombre del servicio a comunicarnos, ese nombre lo definimos en **spring.application.name** del **application.properties** del servicio en question. Dentro de la interfaz especificamos los métodos con los que se realizarán las peticiones Http.
+
+~~~
+@FeignClient(name = "<my-service-name>", url = "<http://url>")
+public interface MyInterface {
+    ...
+}
+~~~
+
+### BALANCEADOR DE CARGA
+
+Suponiendo que tenemos muchas instancias desplegadas de un mismo servicio, cada una en un puerto diferente, el balanceador de carga **Ribbon** nos conectará con la mejor instancia disponible.
+
+Un tema muy importante, **Ribbon** es compatible con versiones de *Spring Boot* 2.3.X e inferiores. Para versiones de *Spring Boot* 2.4.X y superiores se utiliza **Spring Cloud Load Balancer**.
+
+#### RIBBON
+
+Para trabajar con **Ribbon** en versiones de *Spring Boot* 2.4.X o superiores, debemos cambiar la versión de *Spring Boot* a 2.3.X, para ello, debemos realizar algunos cambios en el **pom.xml**:
+
+1. Cambiar la versión de **Spring Boot** en la etiqueta *parent*
+
+    ~~~
+    <version>2.3.12.RELEASE</version>
+    ~~~
+
+2. Cambiar la versión de **Spring Cloud** en la etiqueta *properties*
+
+    ~~~
+    <spring-cloud.version>Hoxton.SR12</spring-cloud.version>
+    ~~~
+
+3. Agregar la dependencia de **Ribbon**
+
+    ~~~
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+    </dependency>
+    ~~~
+
+Para habilitar el uso de *Ribbon* en el servicio, en la clase anotada con *@SpringBootApplication* agregamos la siguiente anotación: `@RibbonClient(name = "<my-service-name>")`.
+
+### SERVIDOR DE NOMBRES
+
+Nos permite registrar los servicios a través de sus nombres, para acceder a ellos a través del balanceador de carga.
+
+#### EUREKA
+
+Es un servidor de nombres que trabaja junto con **Ribbon** y con **Spring Cloud Load Balancer** para acceder a los servicios a través de sus nombres.
+
+Para trabajar con Eureka, debemos crearlo como un servicio nuevo, con solamente su dependencia:
+
+~~~
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+</dependency>
+~~~
+
+Adicional, si creamos el proyecto con *JDK 9*, debemos agregar la dependencia **JAXB**, ya que en esa se incluye en *Java 8* pero no en *Java 9* y superior.
+
+~~~
+<dependency>
+    <groupId>org.glassfish.jaxb</groupId>
+    <artifactId>jaxb-runtime</artifactId>
+</dependency>
+~~~
+
+En la clase principal (de arranque de *Spring Boot*), anotada con **@SpringBootApplication**, agregamos la anotación `@EnableEurekaServer`.
+
+En cada servicio, debemos agregar la dependencia en el **pom.xml**
+
+~~~
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+~~~
+
+Adicional, cada servicio debemos habilitarlo como cliente Eureka, anotando con `@EnableEurekaClient` en la clase principal (de arranque de Spring Boot) de cada servicio en question.
+
+**Nota importante**: Eureka incluye balanceador de carga, por lo que **NO** se debe agregar la dependencia **Ribbon** en los servicios cuando se agrega la dependencia **Eureka discovery**, por lo que si en un principio la incluímos (**Ribbon**), debemos eliminarla del **pom.xml** así como las configuraciones (**application.properties** y **@RibbonClient**).
+
+### TOLERANCIA A FALLOS
+
+#### HYSTRIX
+
+Es una herramienta de Spring Cloud que nos permite manejar fallos en las comunicaciones entre los microservicios, añadiendo funcionalidad para tolerancia a fallos, latencia, timeouts, etc, permitiéndonos agregar o programar un camino alternativo.
+
+**Hystrix** al igual que **Ribbon** solamente es compatible con versiones de *Spring Boot* 2.3.X e inferiores.
+
+Para trabajar con Hystrix, debemos realizar las dos primeras configuraciones que realizamos con **Ribbon** y agregamos la dependencia en el **pom.xml**:
+
+~~~
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+</dependency>
+~~~
+
+Habilitamos **Hystrix** mediante la anotación `@EnableCircuitBreaker` en la clase principal de Spring Boot (la clase de arranque).
+
+### ENRUTAMIENTO DINÁMICO
