@@ -217,3 +217,39 @@ Para trabajar con Hystrix, debemos realizar las dos primeras configuraciones que
 Habilitamos **Hystrix** mediante la anotación `@EnableCircuitBreaker` en la clase principal de Spring Boot (la clase de arranque).
 
 ### ENRUTAMIENTO DINÁMICO
+
+Es un servicio que se encarga del acceso a los demás servicios que estén registrados en Eureka, es como la puerta de entrada a todo el ecosistema de microservicios y se le conoce como puerta de enlace (API Gateway). Esta libería se llama **Zuul** para versiones de *Spring Boot 2.3.X* e inferiores, para versiones de *Spring Boot 2.4.X* y superiores la librería se llama **Spring Cloud Gateway**.
+
+Una de las características principales de estas liberías, es que enrutan de manera dinámica cada uno de los servicios registrados en Eureka, permitiendo dar una ruta base a cada microservicio. Esto nos permite centralizar el acceso a todo el ecosistema en un solo punto de entrada. Todas las peticiones que pasan por el enrutamiento dinámico pasan automáticamente por el balanceo de carga, por lo que no es necesario configurar **Ribbon**, además también maneja la tolerancia a fallos, latencia, timeouts, etc.
+
+### ZUUL
+
+Para trabajar con **Zuul** en versiones de Spring Boot 2.4.X o superiores, debemos realizar los primeros dos puntos explicados en la configruación de **Ribbon**. **Zuul** se debe crear un como servicio adicional que debe incluir la dependencia de Eureka y habilitarla en su clase principal. Adicional, debemos agregar la siguiente dependencia:
+
+~~~
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+</dependency>
+~~~
+
+Y finalmente, habilitar **Zuul** en la clase principal del servicio con la anotación `@EnableZuulProxy`.
+
+#### CICLO DE VIDA DE ENRUTAMIENTO ZUUL
+
+* Pre: Se ejecuta antes de que el request sea enrutado
+* Post: Se ejecuta desués de que el request haya sido enrutado
+* Route: Se ejecuta durante el enrutado del request, aquí se resuelve la ruta
+
+### API GATEWAY
+
+**Spring Cloud Gateway** es un servidor de enrutamiento dinámico
+
+Algunas de las características principales del **API Gateway**:
+
+* Zuul Netflix y Spring Cloud Gateway
+* Puerta de enlace, acceso centralizado
+* Enrutamiento dinámico de los microservicios
+* Balanceo de carga
+* Maneja filtros propios
+* Permite extender funcionalidades
