@@ -23,7 +23,7 @@ public class EjemploGlobalFilter implements GlobalFilter, Ordered {
         exchange.getRequest().mutate().headers(h -> h.add("token", "123456"));
 
         return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-            LOG.info("ejecutando filtro POST");
+            LOG.info("Ejecutando filtro POST");
 
 
             Optional.ofNullable(exchange.getRequest().getHeaders().getFirst("token")).ifPresent(valor -> {

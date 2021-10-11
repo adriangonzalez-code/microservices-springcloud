@@ -34,6 +34,19 @@ spring:
 #            - AddResponseHeader=token-response, 987654
 #            - SetResponseHeader=Content-Type, text/plain
 #            - AddRequestParameter=nombre, adrian
+        - id: servicio-usuarios
+          uri: lb://servicio-usuarios
+          predicates:
+            - Path=/api/usuarios/**
+          filters:
+            - StripPrefix=2
+        - id: servicio-oauth
+          uri: lb://servicio-oauth
+          predicates:
+            - Path=/api/security/**
+          filters:
+            - StripPrefix=2
+
 
 resilience4j:
   circuitbreaker:

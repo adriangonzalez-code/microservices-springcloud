@@ -1,8 +1,8 @@
 package com.smoothiemx.servicioitem.app.controllers;
 
 //import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.smoothiemx.commons.app.models.Producto;
 import com.smoothiemx.servicioitem.app.models.Item;
-import com.smoothiemx.servicioitem.app.models.Producto;
 import com.smoothiemx.servicioitem.app.services.ItemService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
@@ -39,7 +39,7 @@ public class ItemController {
     private CircuitBreakerFactory cbFactory;
 
     @Autowired
-    @Qualifier("itemServiceFeign")
+    @Qualifier("serviceFeign")
     private ItemService itemService;
 
     @GetMapping("/listar")
@@ -114,5 +114,23 @@ public class ItemController {
         }
 
         return new ResponseEntity<Map<String, String>>(json, HttpStatus.OK);
+    }
+
+    @PostMapping("/crear")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Producto crear(@RequestBody Producto producto) {
+        return this.itemService.save(producto);
+    }
+
+    @PutMapping("/editar/{id}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Producto editar(@RequestBody Producto producto, @PathVariable Long id) {
+        return this.itemService.update(producto, id);
+    }
+
+    @DeleteMapping("/eliminar/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable Long id) {
+        this.itemService.delete(id);
     }
 }

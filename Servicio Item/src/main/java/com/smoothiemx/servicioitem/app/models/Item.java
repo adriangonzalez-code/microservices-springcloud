@@ -1,5 +1,7 @@
 package com.smoothiemx.servicioitem.app.models;
 
+import com.smoothiemx.commons.app.models.Producto;
+
 public class Item {
 
     private Producto producto;

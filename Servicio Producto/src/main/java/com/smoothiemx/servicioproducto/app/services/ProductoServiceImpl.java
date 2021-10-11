@@ -1,6 +1,6 @@
 package com.smoothiemx.servicioproducto.app.services;
 
-import com.smoothiemx.servicioproducto.app.models.Producto;
+import com.smoothiemx.commons.app.models.Producto;
 import com.smoothiemx.servicioproducto.app.repositories.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
