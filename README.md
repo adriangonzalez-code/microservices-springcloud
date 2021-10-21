@@ -222,7 +222,7 @@ Es un servicio que se encarga del acceso a los demás servicios que estén regis
 
 Una de las características principales de estas liberías, es que enrutan de manera dinámica cada uno de los servicios registrados en Eureka, permitiendo dar una ruta base a cada microservicio. Esto nos permite centralizar el acceso a todo el ecosistema en un solo punto de entrada. Todas las peticiones que pasan por el enrutamiento dinámico pasan automáticamente por el balanceo de carga, por lo que no es necesario configurar **Ribbon**, además también maneja la tolerancia a fallos, latencia, timeouts, etc.
 
-### ZUUL
+#### ZUUL
 
 Para trabajar con **Zuul** en versiones de Spring Boot 2.4.X o superiores, debemos realizar los primeros dos puntos explicados en la configruación de **Ribbon**. **Zuul** se debe crear un como servicio adicional que debe incluir la dependencia de Eureka y habilitarla en su clase principal. Adicional, debemos agregar la siguiente dependencia:
 
@@ -235,13 +235,13 @@ Para trabajar con **Zuul** en versiones de Spring Boot 2.4.X o superiores, debem
 
 Y finalmente, habilitar **Zuul** en la clase principal del servicio con la anotación `@EnableZuulProxy`.
 
-#### CICLO DE VIDA DE ENRUTAMIENTO ZUUL
+##### CICLO DE VIDA DE ENRUTAMIENTO ZUUL
 
 * Pre: Se ejecuta antes de que el request sea enrutado
 * Post: Se ejecuta desués de que el request haya sido enrutado
 * Route: Se ejecuta durante el enrutado del request, aquí se resuelve la ruta
 
-### API GATEWAY
+#### API GATEWAY
 
 **Spring Cloud Gateway** es un servidor de enrutamiento dinámico
 
@@ -253,3 +253,86 @@ Algunas de las características principales del **API Gateway**:
 * Balanceo de carga
 * Maneja filtros propios
 * Permite extender funcionalidades
+
+#### RESILIENCE4J
+
+Reemplaza a la librería Hystrix en Spring Boot 2.4.X.
+
+Muchas veces en un ecosistema de microservicios la comunicación puede fallar, puede que tarde demasiado tiempo en responder, o que el servicio arroje alguna excepción o simplemente el servicio no se encuentra disponible. Entonces, ¿qué hacemos?. Una buena práctica para esta situación es implementar el patrón cortocircuito o Circuit Breaker.
+
+El patrón cortocircuito tiene 3 estados:
+
+* Cerrado: cuando todo sale bien. Inicialmente, está en estado cerrado.
+
+* Abierto: cuando la tasa de fallas supera el umbral. En este estado las solicitudes al microservicio con fallas no se realizarán. Cuando haya pasado uin cierto límite de tiempo cambiará a un estado Semiabierto.
+
+* Semiabierto: se ejecutarán varias solicitudes para saber si el microservicio está funcionando con normalidad o no. Si tiene éxito, volverá al estado Cerrado, si aún falla, volverá al estado Abierto.
+
+### SPRING CLOUD CONFIG SERVER
+
+Nos permite centralizar la configuración de los microservicios considerando que podemos tener muchas arquitecturas de microservicios y cada uno de ellos con sus propias configuraciones y con diferentes ambientes.
+
+#### ¿CÓMO FUNCIONA?
+
+En el arranque del servicio, antes de registrarse en Eureka, va a consultar al servidor de configuración todas sus propiedades de configuración, y una vez que las obtenga se va a registrar en Eureka y va a arrancar el microservicio en questión.
+
+Para trabajar con esta herramienta, debemos instalar un Sistema de Control de Versiones: Git, SVN, etc.
+
+### TRAZABILIDAD DISTRIBUIDA
+
+#### SPRING CLOUD SLEUTH
+
+Es una dependencia que nos provee una solución de trazado distribuido para Spring Cloud.
+
+Permite identificar la petición completa de un microservicio, como un todo, y en cada llamada individual a otros microservicios.
+
+##### ATRIBUTOS
+
+* TraceId: Identificador asociado a la petición que viaja entre los microservicios.
+
+* SpanId: Identificador de la unidad de trabajo de cada llamada a un microservicio.
+
+Entonces, una traza (trace) está formado por un conjunto de span
+
+##### ANNOTATION
+
+Mide los tiempos de entrada y salida de cada petición, latencia y salud de los servicios:
+
+* CS (Client Sent): El cliente inicia una petición.
+* SR (Server Received): El servidor recibe y procesa la petición
+    > tiempo_sr - tiempo_cs = latencia
+* SS (Server Sent): La respuesta es enviada al servicio cliente
+    > tiempo_ss - tiempo_sr = tiempo procesamiento petición
+* CR (Client Received): El cliente recibe la respuesta del servidor
+    > tiempo_cr - tiempo_cs = tiempo total traza
+
+#### SERVIDOR ZIPKIN
+
+Es una herramienta de monitoreo que puede tomar toda la información de las trazas y las puede exportar a una plataforma para su análisis.
+
+* Servidor para guardar las trazas y monitorización
+* Integra las funcionalidades de Spring Cloud Sleuth
+* Interfaz gráfica para visualizar el árbol de llamada de cada traza
+* Su objetivo es consultar la salud del ecosistema
+
+##### BROKERS DE MENSAJERÍA
+
+Además tiene dos formas de envío de trazas al servidor, mediante cabeceras HTTP y con Brokers de mensajería (RabbitMQ, Kafka).
+
+## SPRING SECURITY
+
+Spring Security es un framework de seguridad, es un proyecto que se integra con Spring Framework ofreciendo todo lo relacionado a autenticación, es decir, todo lo que es login de usuarios a través de credenciales (user y password) y también todo lo que es autorización.
+
+* Autenticación: se refiere al proceso de establecer un principal (un principal significa un usuario, dispositivo o algún otro sistema el cual puede ejecutar alguna acción en nuestro sistema), en general permite a los principal autenticarse en base a cualquier proveedor de seguridad, por ejemplo LDAP, Base de Datos relacional principalmente y Autenticación HTTP.
+
+* Autorización: se refiere al proceso de decidir si se otorga acceso a un usuario para realizar una acción dentro de la aplicación, es decir, para controlar el acceso a los recursos de la aplicación por medio de la asignación de roles y permisos a grupos de usuarios.
+
+* Rol: Es un grupo o tipo de usuario que se le otorga ciertos privilegios para llevar a cabo una o varias acciones dentro de nuestra aplicación.
+
+### OAUTH 2.0
+
+La implementación que trae Spring Security OAUTH 2.0 se compone de dos partes.
+
+1. Servidor de autorización (Authorization Server): Se encarga de realizar la autenticación del usuario y según si es válida, genera un token de acceso y se lo provee al usuario, retorna el token de acceso (JWT) para que posteriormente el usuario, a través de este token pueda acceder a los distintos recursos de nuestra aplicación.
+
+2. Servidor de recursos (Resource Server): Se encarga de administrar los permisos y accesos hacia nuestras páginas y API REST, en los endpoints que están con seguridad. Por debajo el Resource Server habilita un filtro de Spring **OAUTH2AutenticationProcessingFilter**, el cual se utiliza para validar y dar acceso a una petición HTTP o Request que viene desde el cliente.
